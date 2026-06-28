@@ -1,0 +1,1456 @@
+/*
+ * Styles globaux Webdiiv.
+ * Le reset et la mise en forme proviennent des feuilles Webflow chargées
+ * dans app/layout.js : /css/normalize.css, /css/webflow.css,
+ * /css/webdiiv-staging.webflow.css
+ *
+ * Garder ce fichier minimal pendant la phase "fidèle" de la migration.
+ * On y ajoutera nos overrides Tailwind/custom lors de la refonte progressive.
+ */
+
+/* Garde-fou anti-débordement horizontal : empêche la page de « s'élargir » au
+   scroll à cause d'un élément hors-cadre (carrousel de logos, élément en 100vw…).
+   `clip` (et non `hidden`) n'crée pas de conteneur de scroll → ne casse pas les
+   éléments sticky ; la navbar (fixed) n'est pas affectée. */
+.page-wrapper {
+  overflow-x: clip;
+}
+
+/* Descriptions de section centrées : Webflow force `.text-size-regular { text-align:
+   left }` sous le breakpoint tablette (~991px), ce qui décentre TOUTES les descriptions
+   en mobile — y compris celles placées dans un wrapper `.text-align-center` (sous-titre
+   du héros, intros de section réalisations/livrable, etc.) qui doivent rester centrées.
+   On rétablit le centrage pour celles-là uniquement ; les `.text-size-regular` hors
+   `.text-align-center` (cartes services, étapes méthodo, listes) restent à gauche. */
+.text-align-center .text-size-regular {
+  text-align: center;
+}
+
+/* === Unification du noir : un seul noir de marque (#221d1d) ===
+   Le template Advysion câble les fonds sombres sur
+   `--background-color--secondary-background: #000` (noir pur), alors que la
+   charte Webdiiv définit `--primary-color--black: #221d1d` (noir chaud), utilisé
+   par la section Tarifs et la plupart des coins SVG « carvés ». Cette
+   cohabitation de deux noirs faisait apparaître les coutures des transitions
+   (coins de section, bas de cartes, FAQ) : dès qu'un #221d1d touchait du #000,
+   l'écart se voyait comme un trait/bord.
+   On aligne donc TOUS les fonds sombres sur le noir de marque. `!important` car
+   `globals.css` est importé AVANT le CSS Webflow → sans lui, le `:root` Webflow
+   (chargé après, même spécificité) l'emporterait.
+   ⚠️ Les fills SVG des coins en `#000000` (cartes pricing, home + tarifs) sont en
+   dur dans le HTML et corrigés séparément en #221d1d. */
+:root {
+  --background-color--secondary-background: #221d1d !important;
+}
+
+/* ===================================================================== *
+ * Page Réalisations — portfolio en cartes "sticky" + curseur CTA.
+ * Structure & animations reprises du template Webflow "Oranzon"
+ * (section "selected work"), réécrites proprement et habillées Webdiiv.
+ * Classes préfixées `rea-` pour ne pas entrer en collision avec le template
+ * Advysion existant. Animations rejouées en GSAP (voir app/lib/RealisationsWork.js).
+ * ===================================================================== */
+.rea-section {
+  position: relative;
+  z-index: 2;
+  background-color: var(--primary-color--black);
+}
+/* Sur la home, la section Réalisations est un bloc marron entre deux sections
+   claires → on arrondit ses 4 coins comme les autres blocs sombres du site
+   (delivery/pricing, radius xxhuge = 2.5rem). Scopé à `#realisations` (id présent
+   uniquement sur la home, pas sur la page /realisations qui est plein écran). */
+#realisations.rea-section {
+  /* Coins HAUT à plat : la section bénéfices (sombre) et Réalisations (sombre)
+     s'enchaînent sans couture. On garde seulement les coins du bas arrondis
+     (transition vers la section claire suivante). */
+  border-radius: 0 0 var(--_sizes---border-radius--xxhuge)
+    var(--_sizes---border-radius--xxhuge);
+}
+
+/* Section CTA après les cartes : fond CRÈME (#e7dfca, le beige du sous-titre du
+   héros). Fond clair → tous les textes en sombre pour rester lisibles. */
+/* Home — tous les H2 de section : 2e segment en « Horizon Outlined » (comme le
+   H1/H2 de /realisations). Tailles laissées au défaut (heading-style-h2, 120px →
+   homogènes) ; 2e segment légèrement réduit. COULEURS NON TOUCHÉES : chaque span
+   garde sa couleur native (.text-color-secondary gris / .alternate beige). */
+.home-h2-horizon .text-color-secondary {
+  font-family: var(--_typography---font-family--tertiary);
+  font-weight: 400;
+  /* Horizon Outlined est une police DISPLAY très large, traitée comme une ligne
+     d'ACCENT (fioriture) sous la ligne League Spartan lisible : 0,75× la taille du
+     H2, et libre de passer à la ligne (wrap) sur les phrases longues en mobile. */
+  white-space: normal;
+  display: inline-block;
+  line-height: 1.12; /* un peu d'air quand la ligne Horizon wrappe */
+  font-size: 0.75em;
+}
+/* Le template Webflow donne aux H2 une largeur FIXE en rem (47/30/22rem selon le
+   breakpoint). Sur petit mobile, 22rem = 352px dépasse l'écran (≤350px) → le H2
+   débordait à droite. On plafonne la largeur au conteneur pour tous les H2. */
+.heading-style-h2 {
+  max-width: 100%;
+}
+/* 2e ligne en « Horizon Outlined » pour les autres titres de la home (H1 héros,
+   titres de services). N'AFFECTE PAS la couleur : le segment hérite de la couleur
+   de son titre (contrairement à .text-color-secondary qui forcerait le gris). */
+/* Section Méthodologie : bloc numéro en fond menthe #8fdcc2, chiffre en marron #221e1e. */
+/* Contexte d'empilement isolé pour que z-index: -1 sur la ligne reste dans le container */
+.section-about-work-process .process-content-box {
+  isolation: isolate;
+}
+/* Photo droite = même hauteur que la colonne gauche, pas une hauteur fixe */
+@media screen and (min-width: 768px) {
+  .section-about-work-process .process-component-grid {
+    align-items: stretch;
+  }
+  .section-about-work-process .process-image-wrap {
+    height: 100%;
+    min-height: 0;
+  }
+}
+/* Ligne derrière tout le contenu, centrée sur le bloc numéro (70px) */
+.section-about-work-process .process-line {
+  left: 34.5px !important;
+  z-index: -1;
+  border-left-color: #b4b4b4 !important;
+}
+/* Masque la ligne sous le bloc numéro 04 (dans la zone texte) */
+.section-about-work-process .procees-content-block:last-child {
+  position: relative;
+}
+.section-about-work-process .procees-content-block:last-child::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 70px;
+  width: 70px;
+  bottom: 0;
+  background: #fffcf7;
+  z-index: 1;
+}
+@media screen and (max-width: 479px) {
+  .section-about-work-process .procees-content-block:last-child::before {
+    top: 55px;
+    width: 55px;
+  }
+}
+
+.section-about-work-process .process-number-block {
+  position: relative;
+  overflow: hidden;
+  width: 70px;
+  height: 70px;
+  border-radius: 20px;
+  background: #fffcf7;
+  border: 1.5px solid #8fdcc2;
+  color: #8fdcc2;
+  font-size: 1.4rem;
+  font-weight: 700;
+  transition: color 0.45s cubic-bezier(0.22, 0.61, 0.36, 1),
+    box-shadow 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.section-about-work-process .process-number-block::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: #8fdcc2;
+  transform: translateY(100%);
+  transition: transform 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
+  z-index: 0;
+}
+.section-about-work-process .process-number-block > * {
+  position: relative;
+  z-index: 1;
+}
+.section-about-work-process .procees-content-block:hover .process-number-block {
+  color: #221e1e;
+  box-shadow: 0 0 24px 4px rgba(143, 220, 194, 0.25);
+}
+.section-about-work-process .procees-content-block:hover .process-number-block::before {
+  transform: translateY(0);
+}
+
+/* ===== Section "Ce qu'on te livre" — cartes type Scalient =====
+   Au survol : la carte s'incline légèrement à droite et son fond sombre se
+   remplit de crème de bas en haut (le texte passe en sombre). Pur CSS. */
+.section-home-delivery .livrable-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* 4 cartes sur une ligne */
+  gap: 1.25rem;
+}
+/* Autres textes de la section passés du #fffcf7 au beige #e7dfca :
+   le H2 "Ce qu'on te livre" et le bouton contact. */
+.section-home-delivery .heading-style-h2.text-color-alternate,
+.section-home-delivery .button-text {
+  color: #e7dfca;
+}
+
+/* --- Carte bénéfice (modèle Claude Design importé) : bascule AVANT → APRÈS au survol ---
+   Carte sombre qui se soulève + halo menthe au survol ; le contenu « problème »
+   (AVANT) se fond vers le contenu « bénéfice » (APRÈS), et le badge bascule.
+   Typos corrigées : H2 en League Spartan, textes en Epilogue (au lieu de
+   Bricolage Grotesque / Hanken Grotesk de la maquette). */
+@keyframes wd-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(0.82); }
+}
+@keyframes wd-bob {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(4px); }
+}
+.section-home-delivery .benefit-card {
+  --tilt: 6deg; /* même animation que .livrable-card : inclinaison + remplissage beige */
+  position: relative;
+  overflow: hidden;
+  transform-origin: center bottom;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding: 1.6rem 1.5rem 1.3rem;
+  border-radius: 24px;
+  /* Même fond que les cartes voisines (.livrable-card) : translucide chaud sur la section. */
+  background: rgba(255, 252, 247, 0.035);
+  border: 1px solid rgba(255, 252, 247, 0.12);
+  cursor: pointer;
+  transition: transform 0.55s cubic-bezier(0.22, 0.61, 0.36, 1),
+    box-shadow 0.55s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+/* Remplissage beige qui monte du bas (clippé par overflow:hidden), comme .livrable-card. */
+.section-home-delivery .benefit-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: #e7dfca;
+  transform: translateY(100%);
+  transition: transform 0.55s cubic-bezier(0.22, 0.61, 0.36, 1);
+  z-index: 0;
+}
+.section-home-delivery .benefit-card > * {
+  position: relative;
+  z-index: 1;
+}
+/* Transitions de couleur du contenu (sombre sur le beige au survol). */
+.section-home-delivery .benefit-card__title,
+.section-home-delivery .benefit-card__lead,
+.section-home-delivery .benefit-card__list li,
+.section-home-delivery .benefit-card__bullet,
+.section-home-delivery .benefit-card__icon,
+.section-home-delivery .benefit-card__icon svg,
+.section-home-delivery .benefit-card__badge,
+.section-home-delivery .benefit-card__dot,
+.section-home-delivery .benefit-card__state,
+.section-home-delivery .benefit-card__hint,
+.section-home-delivery .benefit-card__hint-icon,
+.section-home-delivery .benefit-card__hint-icon svg,
+.section-home-delivery .benefit-card__hint-text {
+  transition: color 0.4s ease, background-color 0.4s ease,
+    border-color 0.4s ease, fill 0.4s ease, stroke 0.4s ease;
+}
+/* --- Survol : inclinaison 6° + remplissage beige + halo beige --- */
+.section-home-delivery .benefit-card.is-active {
+  transform: rotate(var(--tilt));
+  box-shadow: 0 0 50px 6px rgba(231, 223, 202, 0.25),
+    0 18px 60px rgba(231, 223, 202, 0.12);
+}
+.section-home-delivery .benefit-card.is-active::before {
+  transform: translateY(0);
+}
+/* Contenu en sombre, lisible sur le beige */
+.section-home-delivery .benefit-card.is-active .benefit-card__title {
+  color: var(--primary-color--black);
+}
+.section-home-delivery .benefit-card.is-active .benefit-card__lead,
+.section-home-delivery .benefit-card.is-active .benefit-card__list li {
+  color: rgba(34, 29, 29, 0.78);
+}
+.section-home-delivery .benefit-card.is-active .benefit-card__bullet {
+  background: #221d1d;
+}
+.section-home-delivery .benefit-card.is-active .benefit-card__icon {
+  background: rgba(34, 29, 29, 0.06);
+  border-color: rgba(34, 29, 29, 0.18);
+}
+.section-home-delivery .benefit-card.is-active .benefit-card__icon svg {
+  fill: #221d1d;
+}
+.section-home-delivery .benefit-card.is-active .benefit-card__badge {
+  background: rgba(34, 29, 29, 0.06);
+  border-color: rgba(34, 29, 29, 0.18);
+}
+.section-home-delivery .benefit-card.is-active .benefit-card__dot {
+  background: #221d1d;
+}
+.section-home-delivery .benefit-card.is-active .benefit-card__state {
+  color: var(--primary-color--black);
+}
+.section-home-delivery .benefit-card.is-active .benefit-card__hint {
+  border-top-color: rgba(34, 29, 29, 0.18);
+}
+.section-home-delivery .benefit-card.is-active .benefit-card__hint-icon {
+  background: rgba(34, 29, 29, 0.05);
+  border-color: rgba(34, 29, 29, 0.18);
+}
+.section-home-delivery .benefit-card.is-active .benefit-card__hint-icon svg {
+  stroke: #221d1d;
+}
+.section-home-delivery .benefit-card.is-active .benefit-card__hint-text {
+  color: rgba(34, 29, 29, 0.6);
+}
+.section-home-delivery .benefit-card.is-active .benefit-card__hint-text .state-after {
+  color: #221d1d;
+}
+/* En-tête : icône + badge AVANT/APRÈS */
+.section-home-delivery .benefit-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.75rem;
+}
+.section-home-delivery .benefit-card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 16px;
+  background: linear-gradient(150deg, rgba(142, 215, 179, 0.16), rgba(142, 215, 179, 0.06));
+  border: 1px solid rgba(142, 215, 179, 0.2);
+}
+.section-home-delivery .benefit-card__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 13px 7px 11px;
+  border-radius: 999px;
+  background: rgba(142, 215, 179, 0.08);
+  border: 1px solid rgba(142, 215, 179, 0.18);
+}
+.section-home-delivery .benefit-card__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #8ed7b3;
+  animation: wd-pulse 2.4s ease-in-out infinite;
+}
+.section-home-delivery .benefit-card__state {
+  display: inline-grid;
+  font-family: "Epilogue", sans-serif;
+  font-size: 9.6px; /* −20% (12px → 9.6px) */
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #8ed7b3;
+}
+/* États superposés (grille 1×1) qui se croisent au survol (badge + hint) */
+.section-home-delivery .benefit-card__state .state-before,
+.section-home-delivery .benefit-card__state .state-after,
+.section-home-delivery .benefit-card__hint-text .state-before,
+.section-home-delivery .benefit-card__hint-text .state-after {
+  grid-area: 1 / 1;
+  transition: opacity 0.4s ease;
+}
+.section-home-delivery .benefit-card__state .state-after {
+  opacity: 0;
+}
+.section-home-delivery .benefit-card.is-active .benefit-card__state .state-before {
+  opacity: 0;
+}
+.section-home-delivery .benefit-card.is-active .benefit-card__state .state-after {
+  opacity: 1;
+}
+/* Titre (League Spartan) */
+.section-home-delivery .benefit-card__title {
+  margin: 0 0 1.1rem;
+  font-family: "League Spartan", sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.7rem, 2.6vw, 2.35rem);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  color: #ece4d4;
+  margin-bottom: 1.7rem; /* plus d'air sous le titre */
+}
+/* Corps AVANT / APRÈS empilés (même emplacement) → crossfade */
+.section-home-delivery .benefit-card__bodies {
+  position: relative;
+  display: grid;
+  margin-bottom: 1.6rem;
+}
+.section-home-delivery .benefit-card__body {
+  grid-area: 1 / 1;
+  font-family: "Epilogue", sans-serif;
+  transition: opacity 0.45s ease;
+}
+.section-home-delivery .benefit-card__body.body-after {
+  opacity: 0;
+}
+.section-home-delivery .benefit-card.is-active .body-before {
+  opacity: 0;
+}
+.section-home-delivery .benefit-card.is-active .body-after {
+  opacity: 1;
+}
+.section-home-delivery .benefit-card__lead {
+  margin: 0 0 1.4rem;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 500;
+  color: #e7dfca; /* crème chaud, lisible (au lieu du gris froid) */
+}
+.section-home-delivery .benefit-card__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.95rem;
+}
+.section-home-delivery .benefit-card__list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #e7dfca; /* crème chaud, lisible (au lieu du gris froid) */
+}
+.section-home-delivery .benefit-card__bullet {
+  flex-shrink: 0;
+  margin-top: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #8ed7b3;
+}
+/* Pied : indice de survol */
+.section-home-delivery .benefit-card__hint {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-top: auto;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.section-home-delivery .benefit-card__hint-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.section-home-delivery .benefit-card__hint-text {
+  display: inline-grid;
+  flex: 1;
+  font-family: "Epilogue", sans-serif;
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  color: #837d75;
+}
+.section-home-delivery .benefit-card__hint-text .state-after {
+  opacity: 0;
+  /* pas de menthe ici : la phrase hérite du gris au repos et passe directement en
+     sombre au survol (sinon flash menthe pendant le fondu). */
+}
+.section-home-delivery .benefit-card.is-active .benefit-card__hint-text .state-before {
+  opacity: 0;
+}
+.section-home-delivery .benefit-card.is-active .benefit-card__hint-text .state-after {
+  opacity: 1;
+}
+.section-home-delivery .benefit-card__arrow {
+  margin-left: auto;
+  flex-shrink: 0;
+  animation: wd-bob 1.8s ease-in-out infinite;
+}
+.section-home-delivery .benefit-card.is-active .benefit-card__arrow {
+  animation: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+/* Indication d'interaction unique, en haut de section (remplace la répétition
+   « Survolez/touchez » sur chacune des 4 cartes). Les flèches restent sur les
+   cartes pour l'affordance, les phrases « après » restent en bas de chaque carte. */
+.section-home-delivery .benefit-hint-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0.5rem 1.05rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: "Epilogue", sans-serif;
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  color: #cfc8bd;
+}
+.section-home-delivery .benefit-hint-banner__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.section-home-delivery .benefit-hint-banner__arrow {
+  flex-shrink: 0;
+  animation: wd-bob 1.8s ease-in-out infinite;
+}
+.section-home-delivery .benefit-hint-banner__label {
+  display: inline;
+}
+/* Desktop (souris) : « Survolez » + curseur. Les variantes « toucher » sont masquées. */
+.section-home-delivery .benefit-hint-banner__icon--touch,
+.section-home-delivery .benefit-hint-banner__label--touch {
+  display: none;
+}
+/* Tablette + mobile (tactile, ≤1024px, comme la grille des cartes) : « Touchez » +
+   icône de doigt. On masque la variante survol. */
+@media (max-width: 1024px) {
+  .section-home-delivery .benefit-hint-banner__icon--hover,
+  .section-home-delivery .benefit-hint-banner__label--hover {
+    display: none;
+  }
+  .section-home-delivery .benefit-hint-banner__icon--touch {
+    display: inline-flex;
+  }
+  .section-home-delivery .benefit-hint-banner__label--touch {
+    display: inline;
+  }
+}
+
+/* Tablette : 2 colonnes ; mobile : une colonne. */
+@media (max-width: 1024px) {
+  .section-home-delivery .livrable-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 767px) {
+  .section-home-delivery .livrable-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== Section « Pourquoi Webdiiv » (05) — passée en fond marron =====
+   Pour enchaîner visuellement avec « Ce qu'on te livre » (04) et « Tarifs » (06),
+   déjà en marron : mêmes fond #221d1d + border-radius que les sections voisines.
+   Tous les textes (sombres par défaut sur fond clair) repassent en crème #e7dfca
+   pour rester lisibles sur le marron. */
+.section-service-header {
+  border-radius: 0; /* 05 sans arrondi : fusionne 04→05→06 en un seul bloc marron */
+  background-color: var(--primary-color--black);
+}
+/* Blocs marron de la home. « Ce qu'on te livre » (bénéfice) + « Réalisations »
+   forment UN bloc (haut de la bénéfice arrondi, bas des réalisations arrondi,
+   jonction interne carrée). Depuis la suppression de la section « pourquoi Webdiiv »,
+   « Tarifs » est un bloc marron AUTONOME entre la méthodo et la FAQ (claires) → il
+   est arrondi en HAUT ET en BAS. Préfixe `.home-page` pour passer devant le CSS
+   Webflow (chargé après globals.css). */
+.home-page .section-home-delivery {
+  border-radius: var(--_sizes---border-radius--xxhuge)
+    var(--_sizes---border-radius--xxhuge) 0 0;
+}
+.home-page .section-home-pricing {
+  border-radius: var(--_sizes---border-radius--xxhuge);
+}
+/* Sous-titre « [05] pourquoi Webdiiv » + astérisque, titre H2 et son 2e segment
+   (qui resterait gris), titres de profils et paragraphes, texte du bouton → crème. */
+.section-service-header .subtitle,
+.section-service-header .asterisk,
+.section-service-header .heading-style-h2,
+.section-service-header .home-h2-horizon .text-color-secondary,
+.section-service-header .plan-title,
+.section-service-header .text-size-regular,
+.section-service-header .button-text {
+  color: var(--primary-color--crème);
+}
+/* Numéros 01/02 : menthe #8fdcc2 (comme les icônes). Couleur du TEXTE, pas du fond. */
+.section-service-header .target-number {
+  color: #8fdcc2;
+}
+/* Filets séparateurs : éclaircis pour rester visibles sur le marron. */
+.section-service-header .dividing-line-70 {
+  background-color: rgba(231, 223, 202, 0.35);
+  position: relative;
+  overflow: hidden;
+}
+/* Reflet menthe qui parcourt la ligne de gauche à droite, en boucle (même esprit
+   que le point de la scroll wheel du héros). Bords fondus pour un passage doux. */
+.section-service-header .dividing-line-70::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 28%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #8fdcc2 50%,
+    transparent
+  );
+  animation: dividing-line-scan 2.6s ease-in-out infinite;
+}
+/* Léger décalage du 2e profil pour ne pas synchroniser les deux lignes. */
+.section-service-header .content-flex:nth-child(2) .dividing-line-70::after {
+  animation-delay: 0.6s;
+}
+@keyframes dividing-line-scan {
+  0% {
+    transform: translateX(-120%);
+  }
+  /* glisse jusqu'au bout puis reste hors-champ le temps d'un battement */
+  60%,
+  100% {
+    transform: translateX(380%);
+  }
+}
+/* Bouton « contact » : sa variante a un fond marron (invisible ici). On reprend
+   le fond gris translucide du bouton de la section 04 voisine. */
+.section-service-header .main-button {
+  background-color: #70707080;
+}
+.section-service-header .main-button:hover {
+  background-color: #707070bf;
+}
+
+/* Logos des offres (section 06) en menthe #8fdcc2 : même technique mask que les
+   icônes services. Recolore la SILHOUETTE (couleur du contenu), pas un carré plein.
+   Longhand obligatoire (le mask raccourci ne découpe pas → carré). */
+.section-home-pricing .plan-icon,
+.section-home-pricing .plan-icon-alternate {
+  display: block;
+  background-color: #8fdcc2;
+  -webkit-mask-image: var(--icon);
+  mask-image: var(--icon);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-mode: alpha;
+  mask-mode: alpha;
+}
+
+/* Onglets d'offres (section 06) : l'onglet actif reste crème opaque, les autres
+   sont atténués → l'utilisateur voit sur quelle offre il est. Webflow ne posait ce
+   fondu que sur ≥1440px (cf. webflow.css) ; on le rend valable à TOUS les breakpoints
+   (notamment mobile/tablette, où les onglets s'empilent en 1 colonne). Le `.plan-link`
+   a déjà `transition: all .35s` → le fondu est animé. */
+.section-home-pricing .plan-link:not(.w--current) {
+  opacity: 0.55;
+}
+.section-home-pricing .plan-link.w--current {
+  opacity: 1;
+}
+
+/* FAQ : bouton « + » en menthe #8fdcc2, les barres du + en marron. */
+.section-home-faq .plus-block {
+  background-color: #8fdcc2;
+  border-color: #8fdcc2;
+}
+.section-home-faq .plus-line {
+  background-color: var(--primary-color--black);
+}
+
+/* Footer — deux colonnes « Navigation » et « Contact ».
+   Titres de colonne (label crème) + liens alignés à gauche (par défaut le texte
+   des footer-link est aligné à droite/centré). */
+.footer-col-title {
+  color: #e7dfca;
+  text-transform: uppercase;
+  font-family: "Epilogue", sans-serif;
+  font-size: 12px;
+  font-weight: 300;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.25rem;
+}
+.footer .footer-col-links {
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+.footer .footer-col-links .footer-link {
+  align-items: flex-start;
+}
+.footer .footer-col-links .footer-link-text {
+  text-align: left;
+}
+/* Logo sorti de la colonne, posé au-dessus de la grille (titres Navigation /
+   Contact ainsi alignés sur la même ligne). */
+.footer-logo-top {
+  margin-bottom: -2rem;
+}
+/* Bas du footer (CGV / Mentions légales / ©) centré horizontalement. */
+.footer .footer-info-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem 1.5rem;
+}
+
+/* ── Footer mobile ≤479 ──────────────────────────────────────────────
+ * Bug : la grille du footer reste en 3 colonnes (Navigation / Contact /
+ * « Retour en haut ») même à ≤479, où le gap Webflow passe à 5rem → la 3e
+ * colonne déborde à droite (« Retour en haut » coupé). De plus le bouton
+ * flottant Cal.com (« On commence ? », fixé en bas-droite) recouvre la ligne
+ * basse CGV / Mentions / ©.
+ * Fix : footer en 1 colonne, back-to-top remis dans le flux (compact, en
+ * ligne) en sortant la node grid-area Webflow, et padding bas dégagé pour le
+ * bouton flottant. */
+@media (max-width: 479px) {
+  .footer .footer-component-grid {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-column-gap: 1.5rem;
+    grid-row-gap: 2.5rem;
+  }
+  /* Deux nodes Webflow (bloc ≤479) forçaient un layout 3 colonnes : Navigation
+     s'étalait sur 1 / 1 / 2 / 4, et « Retour en haut » était collé en colonne 3
+     (1 / 3 / 2 / 4). On les remet en placement auto pour qu'ils s'empilent dans
+     la colonne unique. Préfixe `.footer` pour battre l'ID Webflow (globals
+     importé avant → spécificité supérieure obligatoire). */
+  .footer #w-node-_0b5c63bd-c908-caec-5a2e-2ad00a519636-0a5195ee {
+    grid-area: auto;
+  }
+  /* Back-to-top : rangée 2 enjambant les 2 colonnes, poussé à droite via
+     `justify-self:end`. On NE le met PAS dans la seule colonne 2, sinon sa boîte
+     (≈256px) élargit la colonne Contact et la décale. En enjambant, il ne
+     dimensionne plus une colonne précise → Contact garde sa largeur `auto`.
+     La node est plus spécifique que `.back-to-top-wrapper`, donc on la pose ici. */
+  .footer #w-node-_0b5c63bd-c908-caec-5a2e-2ad00a519674-0a5195ee {
+    grid-area: 2 / 1 / 3 / 3;
+  }
+  /* Bloc « Retour en haut » : placé sous Contact (colonne 2) et aligné à droite,
+     cohérent avec la colonne Contact. */
+  .footer .back-to-top-wrapper {
+    grid-column: 2;
+    justify-self: end;
+    justify-content: flex-start;
+    align-items: flex-end;
+    gap: 0.75rem;
+  }
+  /* Le label garde une boîte large avec text-align:center hérité →
+     on force le texte à droite pour qu'il finisse au bord du bouton rond. */
+  .footer .back-to-top-wrapper .text-size-tiny {
+    text-align: right;
+  }
+  /* Ligne basse (CGV / Mentions légales / ©2026) alignée à gauche. */
+  .footer .footer-info-grid {
+    justify-content: flex-start;
+  }
+  /* Dégager la ligne basse du bouton flottant « On commence ? ». */
+  .footer .footer-padding {
+    padding-bottom: 6.5rem;
+  }
+}
+
+/* Hero : molette du scroll (le point) en menthe, indépendamment du contour
+   .mouse-shape (qui garde son bord #444). */
+.scroll-down-block .scroll-wheel {
+  background-color: #8fdcc2;
+}
+
+/* Méthodologie : trait vertical pointillé (process-line) en menthe. */
+.section-about-work-process .process-line {
+  border-left-color: #8fdcc2;
+}
+/* Titres des étapes (h3.heading-style-h6) à la MÊME taille que les titres bénéfices
+   et services → même clamp `clamp(1.7rem, 2.6vw, 2.35rem)`. */
+.section-about-work-process .heading-style-h6 {
+  font-size: clamp(1.7rem, 2.6vw, 2.35rem);
+}
+/* ≥1440px le bloc numéro passe à 80px (cf. webflow.css:5488) mais le `left` de
+   la ligne était resté à 2.25rem (calé sur 70px) → trait décalé à gauche.
+   On le recale sur le centre du bloc (40px). */
+@media (min-width: 1440px) {
+  .section-about-work-process .process-line {
+    left: 2.5rem;
+  }
+}
+
+/* =====================================================================
+ * Nav « scroll-aware » (façon Gemeos).
+ * Pleine largeur en haut de page / au scroll vers le haut ; au scroll vers le
+ * bas elle se replie en pastille centrée (bouton contact + burger). La classe
+ * `nav-compact` est posée par app/lib/NavScroll.js. Tout en CSS + transitions.
+ * Limité au desktop (≥992px) : sur mobile la nav est déjà logo + burger.
+ * ===================================================================== */
+/* Transitions (toujours actives, pour un repli/déploiement doux). */
+.navbar .logo-wrapper,
+.navbar .nav-link-block > .nav-link,
+.navbar .nav-link-block > .dropdown {
+  transition: max-width 0.45s cubic-bezier(0.22, 0.61, 0.36, 1),
+    opacity 0.3s ease, margin 0.45s ease;
+}
+.navbar .nav-background {
+  transition: opacity 0.35s ease;
+}
+.navbar .nav-wrapper {
+  transition: background-color 0.4s ease, padding 0.4s ease,
+    border-radius 0.4s ease, box-shadow 0.4s ease;
+}
+
+@media (min-width: 992px) {
+  /* La grande barre sombre s'efface… */
+  .navbar.nav-compact .nav-background {
+    opacity: 0;
+  }
+  /* …le contenu se cale à droite… */
+  .navbar.nav-compact .nav-content-wrapper {
+    justify-content: flex-end;
+  }
+  /* …le logo se replie… */
+  .navbar.nav-compact .logo-wrapper {
+    max-width: 0;
+    opacity: 0;
+    margin: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  /* …les liens se replient (on garde le bouton contact)… */
+  .navbar.nav-compact .nav-link-block {
+    gap: 0;
+  }
+  .navbar.nav-compact .nav-link-block > .nav-link,
+  .navbar.nav-compact .nav-link-block > .dropdown {
+    max-width: 0;
+    width: 0;
+    padding: 0;
+    margin: 0;
+    opacity: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  /* …et [contact + burger] forment une pastille centrée. */
+  .navbar.nav-compact .nav-wrapper {
+    gap: 0.5rem;
+    padding: 0.4rem 0.5rem;
+    border: 1px solid rgba(255, 252, 247, 0.12);
+    border-radius: 100px;
+    background-color: var(--primary-color--black);
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.22);
+  }
+  /* Burger affiché aussi sur desktop quand la nav est repliée. */
+  .navbar.nav-compact .menu-button {
+    display: flex;
+  }
+}
+
+/* Corps de texte de la page d'accueil : interlettrage + interligne. */
+.home-page .text-size-regular {
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+}
+
+/* Labels « ✼ … » (classe .subtitle) : nouvelle typo de label. */
+div.subtitle {
+  font-family: "Epilogue", sans-serif;
+  font-size: 12px;
+  font-weight: 300;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+/* Labels sur fond sombre (.alternate) : texte en crème comme leur numéro [0x]
+   (sinon le texte reste gris #b4b4b4, peu lisible). */
+div.subtitle.alternate {
+  color: #e7dfca;
+}
+
+/* Icônes de la section « Nos services » : recolorées en menthe #8fdcc2 via mask
+   (les SVG sont des silhouettes, le mask + background-color permet une couleur exacte). */
+.section-home-services .service-icon {
+  display: block;
+  width: 40px;
+  height: 40px;
+  background-color: #8fdcc2;
+  -webkit-mask-image: var(--icon);
+  mask-image: var(--icon);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-mode: alpha;
+  mask-mode: alpha;
+}
+
+/* Cartes services (home) : aligner les cartes par le HAUT dans chaque rangée
+   (sinon align-self:center les recentre → décalage quand un texte est plus long). */
+.section-home-services .service-content-wrap {
+  align-self: start !important;
+}
+/* Titres des catégories services (site web, image de marque…) à la MÊME taille que
+   les titres des cartes bénéfices (.benefit-card__title) → même clamp. */
+.section-home-services .service-title {
+  font-size: clamp(1.7rem, 2.6vw, 2.35rem);
+}
+/* Sur mobile (≤767) la carte service est centrée (icône + titre) mais Webflow force
+   `.text-size-regular { text-align:left }` → la description restait à gauche, seule
+   décalée. On la recentre pour aligner toute la carte. (Desktop inchangé : à gauche.) */
+@media (max-width: 767px) {
+  .section-home-services .text-size-regular {
+    text-align: center;
+  }
+}
+
+/* H1 héros : suppression de l'ombre portée (drop-shadow) sur le titre + ligne 1
+   en League Spartan (la classe `.test` forçait Mona Sans, non chargée → Arial).
+   La 2e ligne garde Horizon Outlined via `.horizon-2l`. */
+h1.heading.test {
+  filter: none;
+  font-family: var(--_typography---font-family--primary);
+  line-height: 1.18; /* Webflow met le H1 à 100% → un peu d'air entre les 2 lignes */
+}
+/* H1 héros trop large sur mobile : la 2e ligne « et indépendants » (Horizon
+   Outlined, large + nowrap) débordait à ≤767 (où Webflow met h1 à 2rem). On rend
+   le H1 fluide (clamp en vw) pour qu'il tienne sur tous les petits écrans, plafond
+   2rem = taille Webflow d'origine (tablette ≥768 inchangée, déjà saine). */
+@media (max-width: 767px) {
+  h1.heading.test {
+    font-size: clamp(1.35rem, 6.2vw, 2rem);
+  }
+}
+/* Sous-titre du héros : limité en largeur et centré → il s'étale sur 2-3 lignes
+   (au lieu d'une seule ligne trop large sur desktop) tout en gardant le H1 et le
+   sous-titre centrés. */
+.header-title-wrap .text-align-center {
+  max-width: 32rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+/* Section « à propos » (01) : structure standard = label `[01]` en haut, puis H2
+   (titre, style des autres sections : League Spartan + 2e ligne Horizon), puis le
+   corps en `.text-size-huge` (anim GSAP « reveal »). */
+
+/* H2 du titre : la phrase est plus longue que les autres H2 de section → on réduit
+   la taille (au lieu des ~120px par défaut) et on autorise le retour à la ligne du
+   segment Horizon (`.text-color-secondary` est en `nowrap` par défaut). */
+/* ⚠️ PAS de `scroll-behavior: smooth` sur `html` : ça CASSE les animations
+   ScrollTrigger `scrub` (cartes Réalisations) — le smooth scroll fait laguer le
+   scrub, le tilt ne suit plus le scroll. (Si un défilement doux des ancres est
+   voulu, le faire en JS sur le clic, jamais via cette propriété CSS.) */
+/* Sections cibles d'ancre (menu « Réalisations » → #realisations, « Tarifs » →
+   #tarifs) : on dégage le haut pour que le titre ne se cale pas sous la nav. */
+#realisations,
+#tarifs {
+  scroll-margin-top: 6rem;
+}
+
+/* =====================================================================
+ * SYSTÈME DE TITRES — H2 de section « .home-h2-horizon »
+ * (ligne 1 League Spartan, ligne 2 Horizon Outlined en accent.)
+ *
+ * - Taille UNIFIÉE pour TOUS les H2 horizon de la home : ~30px mobile
+ *   (lisible) → 52px desktop. Min 1.7rem = plancher confortable ; 7,5vw
+ *   assure la montée fluide ; max 3.25rem = la réf desktop choisie.
+ * - WRAP AUTORISÉ : un titre long passe sur 2-3 lignes sur mobile (normal et
+ *   lisible) au lieu d'être rapetissé.
+ * - width:auto annule les largeurs fixes Webflow (47/30/22rem) qui
+ *   décentraient le H2 et le faisaient déborder sur petit écran.
+ * - La 2e ligne (Horizon) est gérée à 0,75× plus haut (.home-h2-horizon
+ *   .text-color-secondary) : police display large, traitée comme accent.
+ * ===================================================================== */
+.home-page .heading-style-h2.home-h2-horizon {
+  font-size: clamp(1.7rem, 7.5vw, 3.25rem);
+  line-height: 1.25; /* plus aéré, surtout quand le titre wrappe sur 2 lignes */
+  width: auto; /* annule width:38rem de .text-color-alternate (Webflow chargé après) */
+}
+/* Section « à propos » centrée : label + titre + corps. */
+.section-home-about .subtitle-wrap,
+.section-home-about .subtitle,
+.section-home-about .about-h2 {
+  text-align: center;
+  justify-content: center;
+}
+
+/* Corps de texte (reveal) : bloc rectangulaire « newspaper » (League Spartan
+   MAJUSCULES natif), max-width + justify + 32px. */
+.section-home-about .about-right-wrap {
+  max-width: 56.5rem; /* sinon Webflow plafonne le corps à 900px */
+  margin-left: auto;
+  margin-right: auto;
+}
+.section-home-about .text-size-huge {
+  /* Largeur calée sur la ligne Horizon du titre (~902px) → le bloc de texte fait la
+     même largeur que le titre, centré. */
+  max-width: 56.5rem;
+  margin-left: auto;
+  margin-right: auto;
+  /* ~21px mobile → 32px desktop : reste sous le H2 (~30px mobile / 52px desktop)
+     pour garder la hiérarchie titre > corps à toutes les tailles. */
+  font-size: clamp(1.3rem, 5.4vw, 2rem);
+  text-align: justify;
+  color: var(--primary-color--black);
+}
+@media (max-width: 767px) {
+  .about-right-wrap {
+    max-width: none;
+  }
+  /* Mobile : le justifié sur colonne étroite fait de gros trous → on centre le corps
+     (cohérent avec le titre déjà centré). */
+  .section-home-about .text-size-huge {
+    text-align: center;
+  }
+}
+.horizon-2l {
+  font-family: var(--_typography---font-family--tertiary);
+  font-weight: 400;
+  white-space: nowrap;
+  display: inline-block;
+  line-height: 1.12;
+  font-size: 0.82em;
+}
+
+.rea-cta {
+  position: relative;
+  z-index: 2;
+  background-color: var(--primary-color--crème);
+}
+/* Sur la home, la CTA (migrée en fin de landing, après la FAQ) prend le fond blanc
+   standard de la landing (#fffcf7) au lieu du crème. Scopé à `.home-page` pour ne
+   pas toucher la CTA de la page /realisations. */
+.home-page .rea-cta {
+  background-color: var(--primary-color--white);
+}
+/* Réduit le vide haut/bas de la section CTA (par défaut padding-section-large = 8rem). */
+.rea-cta .padding-section-large {
+  padding-top: 4rem;
+  padding-bottom: 4rem;
+}
+.rea-cta .subtitle,
+.rea-cta .heading-style-h2,
+.rea-cta .text-size-regular {
+  color: var(--primary-color--black);
+}
+/* H2 du CTA : volontairement un cran SOUS le H1 du héros (4rem) pour créer une
+   hiérarchie (H1 légèrement plus gros que le H2). Par défaut heading-style-h2 =
+   7,5rem, trop gros ici. */
+.rea-cta .heading-style-h2 {
+  font-size: clamp(2rem, 4.2vw, 3.5rem);
+}
+/* H2 du CTA : 2e ligne en « Horizon Outlined » comme le H1, en sombre (fond clair). */
+.rea-cta .text-color-secondary {
+  font-family: var(--_typography---font-family--tertiary);
+  font-weight: 400;
+  color: var(--primary-color--black);
+  white-space: normal;
+  font-size: clamp(1.25rem, 3vw, 2.6rem);
+  display: inline-block;
+  line-height: 1;
+}
+
+/* Héros : label + H1 centré + sous-titre. Réutilise le gabarit Webflow
+   (subtitle / heading-style-h2 / text-size-regular) mais le fond de section
+   étant marron foncé, on force les couleurs en clair (sinon le texte hérite
+   du sombre par défaut et devient illisible). Scopé à .rea-hero. */
+.rea-hero .subtitle {
+  color: var(--primary-color--crème);
+}
+.rea-hero .heading-style-h2 {
+  color: var(--primary-color--crème);
+  /* Les accroches ici sont plus longues que sur IA/Site web : on réduit la
+     taille (clamp responsive) pour que les deux lignes tiennent sans déborder.
+     Calé à 4rem max : un cran au-dessus du H2 du CTA (3,5rem) pour la hiérarchie. */
+  font-size: clamp(2.25rem, 5vw, 4rem);
+}
+/* 2e ligne du H1 « des résultats qui parlent » : police « Horizon Outlined »
+   (font tertiaire du site, déjà outline par nature → pas besoin de text-stroke).
+   color = couleur des traits → crème (beige). Poids 400 (seul chargé pour cette
+   font ; éviter le 800 hérité qui forcerait un faux-gras sur les contours).
+   On lève le white-space:nowrap hérité (sinon débordement). */
+.rea-hero .text-color-secondary {
+  font-family: var(--_typography---font-family--tertiary);
+  font-weight: 400;
+  color: var(--primary-color--crème);
+  white-space: normal;
+  /* Horizon est large : on réduit la ligne 2 pour qu'elle tienne sur UNE ligne
+     en desktop (≈60px max suffisent à 1440px). Sur mobile elle se réduit et wrap
+     naturellement (white-space:normal) sans déborder horizontalement. */
+  font-size: clamp(1.35rem, 3.4vw, 3rem);
+  display: inline-block;
+  line-height: 1;
+}
+.rea-hero .text-size-regular {
+  color: var(--primary-color--crème);
+}
+
+/* Cartes empilées : position sticky + grands espacements verticaux.
+   top ≈ hauteur de la nav fixe (94px) + marge, pour que le haut de la carte
+   (et son étiquette projet) ne soit pas recouvert par la barre de navigation. */
+.rea-card {
+  position: sticky;
+  top: 8rem;
+}
+/* Espacements UNIFORMES (et plus courts) entre cartes : cadence régulière et
+   peu de scroll « mort » entre deux animations (le template d'origine utilisait
+   des marges croissantes 80/140/200vh → cartes de plus en plus tardives). */
+.rea-card._2,
+.rea-card._3,
+.rea-card._4 {
+  margin-top: 26vh;
+}
+.rea-card-inner {
+  position: relative;
+  height: 74vh;
+  border-radius: 1.5rem;
+  overflow: hidden;
+  cursor: none;
+}
+/* On masque le vrai curseur sur toute la carte (lien + image inclus) pour ne
+   laisser visible que le bouton CTA « voir le site » qui suit la souris. */
+.rea-card-inner,
+.rea-card-inner * {
+  cursor: none;
+}
+.rea-card-link {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.rea-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Overlay d'infos projet (haut de la carte) */
+.rea-info {
+  position: absolute;
+  inset: 5% 4% auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  color: var(--primary-color--white);
+  text-transform: uppercase;
+  pointer-events: none;
+  z-index: 3;
+}
+.rea-info-name {
+  font-family: "League Spartan", sans-serif;
+  font-weight: 600;
+  font-size: 1.5rem;
+  line-height: 1;
+}
+.rea-info-meta {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  opacity: 0.85;
+}
+
+/* Curseur CTA : pastille crème qui apparaît au survol et suit la souris */
+.rea-cursor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10;
+  width: 6rem;
+  height: 6rem;
+  border-radius: 100%;
+  background-color: var(--primary-color--crème);
+  color: var(--primary-color--black);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  transform: scale(0);
+  will-change: transform, top, left;
+}
+.rea-cursor-arrow {
+  width: 1.4rem;
+  height: 1.4rem;
+  transform: translateY(-0.35rem); /* remonté pour laisser place au texte courbé en bas */
+}
+/* Texte « voir le site » courbé le long de l'arc bas intérieur du bouton */
+.rea-cursor-text {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.rea-cursor-text text {
+  font-family: "League Spartan", sans-serif;
+  font-weight: 600;
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  fill: currentColor;
+}
+
+@media screen and (max-width: 991px) {
+  .rea-card._2 {
+    margin-top: 12vh;
+  }
+  .rea-card._3 {
+    margin-top: 18vh;
+  }
+  .rea-card._4 {
+    margin-top: 24vh;
+  }
+  .rea-card-inner,
+  .rea-card-inner * {
+    cursor: auto;
+  }
+  .rea-card-inner {
+    height: 70vh;
+  }
+  /* L'effet curseur est un confort desktop : on le masque sur tactile */
+  .rea-cursor {
+    display: none;
+  }
+}
+
+@media screen and (max-width: 767px) {
+  .rea-card._2,
+  .rea-card._3,
+  .rea-card._4 {
+    margin-top: 6vh;
+  }
+  .rea-card-inner {
+    height: 60vh;
+  }
+  /* Carte 1 (mockup TrendMusic portrait 4:5) : on cale le cadre sur le ratio de
+     l'image pour supprimer totalement le rognage latéral en mobile. */
+  .rea-card._1 .rea-card-inner {
+    height: auto;
+    aspect-ratio: 4 / 5;
+  }
+}
+
+/* --- Rotation des ovales 3D de FAQ (pages Site web & Image de marque) --- */
+/* L'interaction Webflow "Rotate 3D" (a-27) n'est déclenchée qu'au chargement des
+   pages Home/Contact. Les pages tournant sous leur propre id (siteweb,
+   image-de-marque) ne l'obtiennent pas : on rejoue la rotation en CSS, scopée via
+   .faq-3d-spin pour ne pas affecter /ia & /application qui l'ont déjà via IX2.
+   preserve-3d est requis car, en CSS pur, il n'est pas ajouté automatiquement. */
+.faq-3d-spin ._3d-object {
+  transform-style: preserve-3d;
+  animation: faq-3d-spin 20s linear infinite;
+}
+
+/* Avec preserve-3d, le `overflow: hidden` du cadre ne découpe plus toujours les
+   enfants animés en 3D : le bas arrondi (crème/gris) d'un ovale dépasse alors sous
+   le cadre. clip-path découpe même le contenu 3D ; on cale le rayon sur la même
+   variable que le border-radius Webflow pour épouser exactement les coins. */
+.faq-3d-spin {
+  clip-path: inset(0 round var(--_sizes---border-radius--xxhuge));
+}
+
+@keyframes faq-3d-spin {
+  from {
+    transform: rotateX(0deg);
+  }
+  to {
+    transform: rotateX(360deg);
+  }
+}
+
+/* --- Page Image de marque : accordéons autonomes (app/lib/BrandFaq.js) --- */
+/* Scopés à .brand-faq pour ne PAS toucher la FAQ de /siteweb (qui garde ses
+   accordéons Webflow IX2). Hauteur posée en JS. */
+.brand-faq .accordion-content-wrap {
+  overflow: hidden;
+  transition: height 0.4s ease;
+}
+
+/* Croix "+" → "−" quand l'item est ouvert (override du transform inline). */
+.brand-faq .accordion-content-item.is-open .plus-line.vertical {
+  transform: rotateZ(0deg) !important;
+}
+
+/* --- Page Site web : reveal au scroll (SplitText) --- */
+/* Chaque mot est un bloc insécable pour qu'aucun mot ne soit coupé en fin de
+   ligne (le découpage en caractères, lui, sert uniquement à l'animation). */
+.siteweb-reveal .siteweb-reveal-word {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+/* --- Tags "✼ ..." : espace entre l'astérisque et le texte --- */
+/* Le simple espace HTML paraît collé contre le glyphe ✼ (span à 20px, plus gros
+   que le texte). On réserve une petite marge à droite, sur tous les tags subtitle
+   qui utilisent <span class="asterisk">. */
+.asterisk {
+  margin-right: 0.3em;
+}
+
+/* --- Page IA : aligner les cartes de service --- */
+/* Les cartes sont déjà à hauteur égale (grille stretch) ; on réserve la même
+   hauteur au titre (≈ 2 lignes) pour que le trait et le texte s'alignent d'une
+   carte à l'autre, quel que soit le nombre de lignes du titre. Valeur en `em`
+   pour rester correct à tous les breakpoints. */
+.ia-services-grid .service-content-wrap {
+  height: 100%;
+}
+
+.ia-services-grid .service-title {
+  min-height: 2.4em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* --- Page IA : méthodologie (3 étapes) --- */
+/* La ligne pointillée est calibrée pour les 4 étapes de la home. Avec 3 étapes,
+   la boîte est étirée par l'image (hauteur fixe) et la ligne dépasse au-dessus de
+   la puce 01 et sous la dernière. On décolle la boîte de cette hauteur et on cale
+   la ligne du centre de la 1re puce au centre de la dernière (puces = 70px). */
+.ia-methodologie .process-content-box {
+  height: auto;
+  align-self: center;
+}
+
+.ia-methodologie .process-line {
+  top: 35px;
+  height: calc(100% - 70px);
+}
+
+/* =====================================================================
+ * Menu burger (overlay plein écran `.navigation`) — version Webdiiv mobile.
+ * - Numéros (01..04) supprimés.
+ * - Titres (`.navigation-link-text`) plus petits.
+ * - Section « Services » en ACCORDÉON : sous-liste repliée par défaut,
+ *   dépliée quand le bloc porte `.services-open` (posé par
+ *   MobileMenuAccordion.js au tap). Chevron sur les blocs `.has-sub`.
+ * ===================================================================== */
+
+/* Numéros supprimés (ils n'apparaissent que dans l'overlay). */
+.navigation-number {
+  display: none;
+}
+
+/* Titres plus petits + hauteur de clip (swap survol) ajustée à la nouvelle
+   taille. Préfixe `.navigation` pour battre les règles Webflow (même
+   spécificité mais chargées après globals). */
+@media (max-width: 991px) {
+  /* Titres plus petits. `line-height` augmenté : à 1 le clip `overflow:hidden`
+     (gardé pour le reveal IX2) coupe l'accent du « É » ; le half-leading d'un
+     line-height >1 redonne de la place au-dessus du glyphe → accent visible. */
+  .navigation .navigation-link-text {
+    font-size: 2.25rem;
+    line-height: 1.3;
+  }
+  /* On masque la 2e copie (swap au survol = inutile sur tactile, laissait voir un
+     bout des 2 titres). On GARDE `overflow:hidden` sur le wrap ET le bloc (sinon
+     le reveal IX2 se désynchronise : liens visibles trop tôt / trop longtemps à la
+     fermeture). La hauteur passe en auto pour épouser la nouvelle line-box. */
+  .navigation .navigation-link-wrap {
+    height: auto;
+  }
+  .navigation .navigation-link-wrap .navigation-link-text:nth-child(2) {
+    display: none;
+  }
+}
+@media (max-width: 479px) {
+  .navigation .navigation-link-text {
+    font-size: 1.875rem;
+  }
+}
+
+/* Sous-liste « Services » : repliée par défaut (accordéon). */
+.navigation-sublist {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-left: 0;
+  /* padding haut/bas posé seulement à l'ouverture (sinon il s'ajouterait à la
+     hauteur de la boîte repliée et casserait le `max-height:0`). */
+  padding-top: 0;
+  padding-bottom: 0;
+  align-items: flex-start;
+  overflow: hidden;
+  max-height: 0;
+  margin-top: 0;
+  opacity: 0;
+  transition: max-height 0.35s ease, opacity 0.3s ease, margin-top 0.3s ease,
+    padding-top 0.3s ease, padding-bottom 0.3s ease;
+}
+.navigation-link-block.services-open .navigation-sublist {
+  max-height: 22rem;
+  margin-top: 0.6rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  opacity: 1;
+}
+.navigation-sublink {
+  color: var(--primary-color--white);
+  text-decoration: none;
+  font-family: var(--_typography---font-family--secondary);
+  font-size: 1.15rem;
+  line-height: 1.2;
+  opacity: 0.65;
+  transition: opacity 0.25s ease;
+}
+.navigation-sublink:hover {
+  opacity: 1;
+}
+
+/* Chevron sur le lien « Services » (bloc à sous-liste) : indique l'accordéon,
+   pivote à l'ouverture. */
+.navigation-link-block.has-sub .navigation-link {
+  align-items: center;
+  /* Webflow pose `grid-column-gap:1rem` sur `.navigation-link` → on le réduit
+     de moitié pour rapprocher le chevron du texte. */
+  grid-column-gap: 0.5rem;
+  column-gap: 0.5rem;
+}
+/* Chevron = vrai SVG « v » découpé en mask (longhand + alpha, cf. convention
+   icônes du projet) : la boîte reste axe-alignée → aucun rognage / décalage,
+   on ne fait pivoter que le glyphe (180° à l'ouverture). */
+.navigation-link-block.has-sub .navigation-link::after {
+  content: "";
+  width: 0.95rem;
+  height: 0.95rem;
+  margin-left: 0.2rem;
+  flex: none;
+  align-self: center;
+  background-color: var(--primary-color--white);
+  opacity: 0.8;
+  --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  -webkit-mask-image: var(--chevron);
+  mask-image: var(--chevron);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-mode: alpha;
+  mask-mode: alpha;
+  transition: transform 0.3s ease;
+}
+.navigation-link-block.services-open.has-sub .navigation-link::after {
+  transform: rotate(180deg);
+}
+
+/* --- Boutons (.main-button) : accents (É de RÉSERVER/RÉALISATIONS) coupés --- */
+/* Le template Advysion empile 2 copies de `.button-text` dans `.main-button-block`
+   (`overflow:hidden`, height 14px). Au survol, l'interaction Webflow IX2 translate
+   `.button-text` de -100% (RELATIF à la hauteur de ligne, pas une valeur fixe) :
+   copie 1 sort par le haut, copie 2 entre → effet de swap (+ l'icône pivote 180°).
+   Avec `line-height: 1`, la fenêtre de clip est calée pile sur les capitales :
+   l'accent du É de la copie visible est coupé en haut, et celui de la 2e copie
+   pointe en bas.
+   FIX : on agrandit la fenêtre (line-height + height du bloc, du MÊME montant). Le
+   translate étant en -100% relatif, le swap reste parfaitement calé (copie 2 prend
+   exactement la place de la copie 1). line-height 18px → ~4px de marge au-dessus des
+   capitales : l'accent rentre, le texte reste centré (capitales centrées = alignées
+   avec l'icône), et l'accent de la 2e copie reste hors fenêtre.
+   Sélecteur spécifique (.main-button …) pour passer devant le CSS Webflow chargé
+   après globals.css. */
+.main-button .button-text {
+  line-height: 18px;
+}
+.main-button .main-button-block {
+  height: 18px;
+}
