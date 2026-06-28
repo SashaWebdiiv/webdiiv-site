@@ -14,6 +14,21 @@ export const metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/" },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      {
+        url: "/favicon-light.png",
+        type: "image/png",
+        media: "(prefers-color-scheme: light)",
+      },
+      {
+        url: "/favicon-dark.png",
+        type: "image/png",
+        media: "(prefers-color-scheme: dark)",
+      },
+    ],
+  },
   openGraph: {
     title: TITLE,
     description: DESCRIPTION,
