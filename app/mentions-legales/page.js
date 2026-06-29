@@ -16,7 +16,10 @@ export default function MentionsLegalesPage() {
             <div className="padding-section-large">
               <div className="subtitle-wrap">
                 <div className="subtitle">
-                  <span className="asterisk">✼</span> Informations légales
+                  <span className="asterisk" style={{ fontSize: "12px", bottom: 0 }}>
+                    [01]
+                  </span>{" "}
+                  Informations légales
                 </div>
               </div>
               <h1 className="heading-style-h2 text-align-center">

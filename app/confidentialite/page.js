@@ -17,7 +17,10 @@ export default function ConfidentialitePage() {
             <div className="padding-section-large">
               <div className="subtitle-wrap">
                 <div className="subtitle">
-                  <span className="asterisk">✼</span> Vie privée
+                  <span className="asterisk" style={{ fontSize: "12px", bottom: 0 }}>
+                    [01]
+                  </span>{" "}
+                  Vie privée
                 </div>
               </div>
               <h1 className="heading-style-h2 text-align-center">
