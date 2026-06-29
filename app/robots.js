@@ -3,7 +3,13 @@ export default function robots() {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/_application", "/_ia", "/_image-de-marque", "/_siteweb"],
+      disallow: [
+        "/_application",
+        "/_contact",
+        "/_ia",
+        "/_image-de-marque",
+        "/_siteweb",
+      ],
     },
     sitemap: "https://webdiiv.com/sitemap.xml",
     host: "https://webdiiv.com",

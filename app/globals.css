@@ -1454,3 +1454,10 @@ h1.heading.test {
 .main-button .main-button-block {
   height: 18px;
 }
+
+/* Bannière de consentement : masque le bouton flottant Cal.com tant que la
+   bannière est affichée (sinon il se chevauche et bloque les clics sur mobile/
+   tablette). La classe est posée sur <body> par CookieBanner.js. */
+body.consent-open cal-floating-button {
+  display: none !important;
+}

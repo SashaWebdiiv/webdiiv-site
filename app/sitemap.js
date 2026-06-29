@@ -7,11 +7,6 @@ export default function sitemap() {
       changeFrequency: "monthly",
       priority: 1,
     },
-    {
-      url: `${base}/contact`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
+    // /contact retiré : page en WIP (à retravailler avant publication).
   ];
 }

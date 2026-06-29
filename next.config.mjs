@@ -47,6 +47,12 @@ const nextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
+  // /contact est en WIP (à retravailler). Redirection temporaire vers
+  // l'accueil pour éviter tout 404 (les CTA ouvrent le pop Cal.com via JS).
+  // permanent: false → 307, pour pouvoir republier /contact plus tard.
+  async redirects() {
+    return [{ source: "/contact", destination: "/", permanent: false }];
+  },
 };
 
 export default nextConfig;

@@ -23,6 +23,14 @@ export default function CookieBanner() {
     if (!choice) setOpen(true);
   }, []);
 
+  // Tant que la bannière est ouverte, on masque le bouton flottant Cal.com
+  // (son z-index énorme passerait au-dessus et bloquerait les clics, surtout
+  // sur mobile/tablette). Géré via une classe sur <body> + CSS dans globals.
+  useEffect(() => {
+    document.body.classList.toggle("consent-open", open);
+    return () => document.body.classList.remove("consent-open");
+  }, [open]);
+
   const decide = (granted) => {
     try {
       localStorage.setItem(KEY, granted ? "granted" : "denied");

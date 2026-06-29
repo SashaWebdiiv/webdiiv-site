@@ -10,9 +10,9 @@ import CookieBanner from "./lib/CookieBanner";
 // ID GTM (public) — surchargeable via env NEXT_PUBLIC_GTM_ID
 const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID || "GTM-WC7QGMZ6";
 
-const TITLE = "Agence web TPE & indépendants | Webdiiv";
+const TITLE = "Agence web TPE & PME | Webdiiv";
 const DESCRIPTION =
-  "Webdiiv accompagne les TPE et indépendants : site web professionnel, identité visuelle, réseaux sociaux. Livraison en 3-4 semaines. Premier échange gratuit.";
+  "Création de sites web et d'identités de marque pour TPE & PME. Webdiiv vous aide à attirer plus de prospects et convertir vos visiteurs en client";
 
 export const metadata = {
   metadataBase: new URL("https://webdiiv.com"),
