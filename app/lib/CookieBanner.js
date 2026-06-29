@@ -40,9 +40,10 @@ export default function CookieBanner() {
   return (
     <div role="dialog" aria-label="Consentement aux cookies" style={S.wrap}>
       <p style={S.text}>
-        On utilise des cookies de mesure d'audience (Google Analytics) pour
-        comprendre comment le site est utilisé. Tu peux accepter ou refuser —
-        ça ne change rien à ta navigation.{" "}
+        Nous utilisons des cookies de mesure d'audience, notamment Google
+        Analytics, afin de mieux comprendre l'utilisation du site. Vous pouvez
+        les accepter ou les refuser : cela n'aura aucun impact sur votre
+        navigation.{" "}
         <a href="/confidentialite" style={S.link}>
           En savoir plus
         </a>
