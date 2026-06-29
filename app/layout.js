@@ -5,6 +5,7 @@ import NavScroll from "./lib/NavScroll";
 import MobileMenuAccordion from "./lib/MobileMenuAccordion";
 import BenefitCards from "./lib/BenefitCards";
 import Analytics from "./lib/Analytics";
+import CookieBanner from "./lib/CookieBanner";
 
 // ID GTM (public) — surchargeable via env NEXT_PUBLIC_GTM_ID
 const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID || "GTM-WC7QGMZ6";
@@ -86,6 +87,14 @@ export default function RootLayout({ children }) {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
+        {/* Consent Mode v2 — par défaut TOUT est refusé (avant GTM).
+            Si un consentement a déjà été donné, on le réapplique avant
+            le chargement de GTM (visiteur de retour tracké immédiatement). */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'denied',wait_for_update:500});try{if(localStorage.getItem('webdiiv_consent')==='granted'){gtag('consent','update',{analytics_storage:'granted'});}}catch(e){}`,
+          }}
+        />
         {/* Google Tag Manager (chargé seulement si l'ID est défini) */}
         {GTM_ID && (
           <Script id="gtm-init" strategy="afterInteractive">
@@ -110,6 +119,7 @@ export default function RootLayout({ children }) {
         <MobileMenuAccordion />
         <BenefitCards />
         <Analytics />
+        <CookieBanner />
 
         {/* Google Fonts via WebFont loader (Epilogue + League Spartan) */}
         <Script
