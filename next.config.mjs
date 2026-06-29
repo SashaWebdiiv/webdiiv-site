@@ -1,7 +1,8 @@
 /** @type {import('next').NextConfig} */
 
 // Politique CSP. Sources autorisées = ce que le site charge réellement :
-// - scripts : self + inline (init WebFont/Cal) + CDN GSAP/jQuery + Cal.com
+// - scripts : self + inline (init WebFont/Cal/GTM) + CDN GSAP/jQuery + Cal.com + GTM
+// - connect : Cal.com + GTM + Google Analytics (collecte GA4)
 // - styles  : self + inline (Webflow) + Google Fonts
 // - fonts   : self + gstatic
 // - frame   : Cal.com (widget de réservation embarqué)
@@ -10,11 +11,11 @@
 // `Content-Security-Policy` (enforce).
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://app.cal.com https://ajax.googleapis.com https://cdn.prod.website-files.com https://d3e54v103j8qbb.cloudfront.net",
+  "script-src 'self' 'unsafe-inline' https://app.cal.com https://ajax.googleapis.com https://cdn.prod.website-files.com https://d3e54v103j8qbb.cloudfront.net https://www.googletagmanager.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' data: https://fonts.gstatic.com",
   "img-src 'self' data: https:",
-  "connect-src 'self' https://app.cal.com https://*.cal.com",
+  "connect-src 'self' https://app.cal.com https://*.cal.com https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com",
   "frame-src https://app.cal.com https://cal.com",
   "frame-ancestors 'self'",
   "base-uri 'self'",
