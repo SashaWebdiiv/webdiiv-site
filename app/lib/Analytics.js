@@ -31,11 +31,25 @@ export default function Analytics() {
           offre = new URL(href, window.location.origin).searchParams.get("offre");
         } catch {}
       }
-      const source = trigger.tagName?.toLowerCase() === "cal-floating-button"
-        ? "floating"
-        : "inline";
+      const isFloating = trigger.tagName?.toLowerCase() === "cal-floating-button";
+      const source = isFloating ? "floating" : "inline";
 
       push({ event: "cal_open", cal_source: source, offre: offre || undefined });
+
+      // Le bouton flottant ouvre déjà son propre modal. Pour les liens inline
+      // (`[data-cal-link]`), l'embed Cal n'auto-bind pas car ils portent un
+      // `href` de repli → on ouvre le modal nous-mêmes et on bloque la nav.
+      if (isFloating) return;
+      const calLink = trigger.getAttribute?.("data-cal-link");
+      const ns = window.Cal?.ns?.[trigger.getAttribute?.("data-cal-namespace") || "30min"];
+      if (!calLink || !ns) return; // Cal pas prêt → on laisse le href de repli
+      e.preventDefault();
+      let config = { layout: "month_view" };
+      try {
+        const raw = trigger.getAttribute?.("data-cal-config");
+        if (raw) config = JSON.parse(raw);
+      } catch {}
+      ns("modal", { calLink, config });
     };
     document.addEventListener("click", onClick, true);
 
