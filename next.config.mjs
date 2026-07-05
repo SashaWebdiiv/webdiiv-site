@@ -6,9 +6,8 @@
 // - styles  : self + inline (Webflow) + Google Fonts
 // - fonts   : self + gstatic
 // - frame   : Cal.com (widget de réservation embarqué)
-// ⚠️ Démarrée en Report-Only (ne bloque rien, log console) le temps de valider
-// le widget Cal.com + les polices dans un vrai navigateur, puis basculer en
-// `Content-Security-Policy` (enforce).
+// Validée en Report-Only (widget Cal.com + polices + GTM/GA OK en prod),
+// puis passée en enforce (`Content-Security-Policy`) le 2026-07-05.
 const csp = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' https://app.cal.com https://ajax.googleapis.com https://cdn.prod.website-files.com https://d3e54v103j8qbb.cloudfront.net https://www.googletagmanager.com",
@@ -16,7 +15,7 @@ const csp = [
   "font-src 'self' data: https://fonts.gstatic.com",
   "img-src 'self' data: https:",
   "connect-src 'self' https://app.cal.com https://*.cal.com https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com",
-  "frame-src https://app.cal.com https://cal.com",
+  "frame-src https://app.cal.com https://cal.com https://www.googletagmanager.com",
   "frame-ancestors 'self'",
   "base-uri 'self'",
   "form-action 'self'",
@@ -38,9 +37,9 @@ const securityHeaders = [
     key: "Strict-Transport-Security",
     value: "max-age=63072000; includeSubDomains; preload",
   },
-  // CSP en mode observation (ne casse rien). Passer la clé à
-  // "Content-Security-Policy" pour activer le blocage une fois validé.
-  { key: "Content-Security-Policy-Report-Only", value: csp },
+  // CSP en mode enforce : bloque ce qui n'est pas dans la liste.
+  // (Repasser en "Content-Security-Policy-Report-Only" pour déboguer.)
+  { key: "Content-Security-Policy", value: csp },
 ];
 
 const nextConfig = {
