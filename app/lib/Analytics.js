@@ -36,14 +36,24 @@ export default function Analytics() {
 
       push({ event: "cal_open", cal_source: source, offre: offre || undefined });
 
-      // Le bouton flottant ouvre déjà son propre modal. Pour les liens inline
-      // (`[data-cal-link]`), l'embed Cal n'auto-bind pas car ils portent un
-      // `href` de repli → on ouvre le modal nous-mêmes et on bloque la nav.
+      // Le bouton flottant gère son propre modal → on ne fait que tracker.
       if (isFloating) return;
+
+      // Liens inline (`[data-cal-link]`) : ils portent un `href` de repli, donc
+      // on bloque toujours la navigation (jamais de "refresh").
       const calLink = trigger.getAttribute?.("data-cal-link");
-      const ns = window.Cal?.ns?.[trigger.getAttribute?.("data-cal-namespace") || "30min"];
-      if (!calLink || !ns) return; // Cal pas prêt → on laisse le href de repli
+      if (!calLink) return;
       e.preventDefault();
+
+      const ns = window.Cal?.ns?.[trigger.getAttribute?.("data-cal-namespace") || "30min"];
+      // Cal pas encore prêt → on laisse l'événement remonter (au cas où l'embed
+      // Cal l'attrape), sans ouvrir nous-mêmes (évite un double modal).
+      if (!ns) return;
+
+      // Cal prêt : on ouvre le modal nous-mêmes ET on stoppe la propagation en
+      // capture pour empêcher le handler bubble de l'embed d'en ouvrir un 2e
+      // (double modal → double lock `overflow:hidden`, scroll bloqué).
+      e.stopImmediatePropagation();
       let config = { layout: "month_view" };
       try {
         const raw = trigger.getAttribute?.("data-cal-config");
