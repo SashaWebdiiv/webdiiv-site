@@ -6,6 +6,7 @@ import MobileMenuAccordion from "./lib/MobileMenuAccordion";
 import BenefitCards from "./lib/BenefitCards";
 import Analytics from "./lib/Analytics";
 import CookieBanner from "./lib/CookieBanner";
+import VideoPerf from "./lib/VideoPerf";
 
 // ID GTM (public) — surchargeable via env NEXT_PUBLIC_GTM_ID
 const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID || "GTM-WC7QGMZ6";
@@ -115,6 +116,7 @@ export default function RootLayout({ children }) {
         )}
         {children}
         <WebflowInit />
+        <VideoPerf />
         <NavScroll />
         <MobileMenuAccordion />
         <BenefitCards />
